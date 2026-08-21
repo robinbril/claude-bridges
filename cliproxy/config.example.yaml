@@ -1,0 +1,97 @@
+# CLIProxyAPI config voor de claude-roundtable (Grok + Kimi).
+# Grok: via de bestaande grok-auth-proxy (:3457, Grok Build subscription-JWT,
+#       vers per request gelezen uit ~/.grok/auth.json). Een subscription-pad,
+#       geen dubbele token-refresh.
+# Kimi: native OAuth-channel; login eenmalig met: .\cli-proxy-api.exe -kimi-login
+
+port: 8317
+
+auth-dir: "~/.cli-proxy-api"
+
+# Lokale router-key voor de roundtable-skill (MODEL_ROUTER_KEY).
+api-keys:
+  - "VERVANG-DOOR-EIGEN-ROUTER-KEY"
+
+remote-management:
+  allow-remote: false
+  secret-key: ""
+
+openai-compatibility:
+  - name: "grokbridge"
+    base-url: "http://127.0.0.1:3457/v1"
+    # De echte auth zit in de grok-auth-proxy; de dummy-key hier mag nooit in
+    # cooldown (anders blokkeert een upstream-quota-fout de hele provider).
+    disable-cooling: true
+    api-key-entries:
+      - api-key: "VERVANG-DOOR-OPENROUTER-KEY"
+    models:
+      - name: "grok-4.6"
+        alias: "grok"
+        display-name: "Grok 4.6 (Build)"
+      - name: "grok-composer-2.5-fast"
+        alias: "grok-fast"
+        display-name: "Grok Composer 2.5 Fast"
+      # claude -p resolvet een onbekende --model naar zijn default claude-IDs;
+      # vang die op zodat de roundtable-calls (main + small-fast) bij Grok landen.
+      - name: "grok-4.6"
+        alias: "claude-opus-4-8"
+      - name: "grok-4.6"
+        alias: "claude-haiku-4-5-20251001"
+      - name: "grok-4.6"
+        alias: "claude-sonnet-5"
+      # Claude 5-generatie defaults (CLI-update 2026-08): zonder deze aliassen
+      # 502't elke delegatie zodra de harness zijn interne default-ID stuurt.
+      - name: "grok-4.6"
+        alias: "claude-opus-5"
+      - name: "grok-4.6"
+        alias: "claude-fable-5"
+
+  - name: "openrouter"
+    base-url: "https://openrouter.ai/api/v1"
+    # Eén quota-403 zette de key anders permanent in cooldown: daarna gaf de
+    # provider "auth_unavailable" tot een herstart, ook nadat het budget al
+    # verhoogd was. Laat de 403 gewoon doorkomen, die is zelfverklarend.
+    disable-cooling: true
+    api-key-entries:
+      - api-key: "VERVANG-DOOR-OPENROUTER-KEY"
+    models:
+      - name: "deepseek/deepseek-v4-flash-0731"
+        alias: "deepseek"
+        display-name: "DeepSeek V4 Flash 0731 (OpenRouter)"
+      - name: "deepseek/deepseek-v4-flash-0731"
+        alias: "openrouter"
+      # G0DM0D3-achtige multi-model toegang: dezelfde OpenRouter-key, meerdere
+      # modellen los kiesbaar. Slugs opgehaald bij openrouter.ai/api/v1/models.
+      - name: "deepseek/deepseek-v4-pro"
+        alias: "deepseek-pro"
+        display-name: "DeepSeek V4 Pro (OpenRouter)"
+      - name: "anthropic/claude-opus-4.8"
+        alias: "or-opus"
+        display-name: "Claude Opus 4.8 (OpenRouter)"
+      - name: "anthropic/claude-sonnet-4.5"
+        alias: "or-sonnet"
+        display-name: "Claude Sonnet 4.5 (OpenRouter)"
+      - name: "x-ai/grok-4.5"
+        alias: "or-grok"
+        display-name: "Grok 4.5 (OpenRouter)"
+      - name: "openai/gpt-4o"
+        alias: "or-gpt4o"
+        display-name: "GPT-4o (OpenRouter)"
+      - name: "google/gemini-2.5-pro"
+        alias: "or-gemini"
+        display-name: "Gemini 2.5 Pro (OpenRouter)"
+      - name: "z-ai/glm-4.6"
+        alias: "or-glm"
+        display-name: "GLM 4.6 (OpenRouter)"
+      - name: "moonshotai/kimi-k2.6"
+        alias: "or-kimi"
+        display-name: "Kimi K2.6 (OpenRouter)"
+
+# Kimi K3 via de native kimi-channel (OAuth). Aliassen na `-kimi-login` verifieren
+# met /v1/models; de echte modelnaam kan kimi-k3 / kimi-k2.5 / kimi-k3-swarm zijn.
+oauth-model-alias:
+  kimi:
+    - name: "kimi-k3"
+      alias: "kimi-k3"
+    - name: "kimi-k3"
+      alias: "kimi"

@@ -1,0 +1,42 @@
+# ~/.delegate.conf — machine-specifieke instellingen voor delegate.sh.
+# Wordt gesourced als bash; staat BUITEN git. Kopieer dit bestand naar
+# ~/.delegate.conf en pas aan. Alles is optioneel: zonder conf draait
+# delegate.sh op de defaults hieronder.
+
+# Verplicht voor de bridge-rails: de router-key uit cliproxy/config.yaml.
+# MODEL_ROUTER_KEY="jouw-router-key"
+
+# Bridge-endpoint en optioneel een aparte claude-config-dir voor delegaties
+# (houdt settings/history van je hoofd-seat schoon).
+# BRIDGE_URL="http://127.0.0.1:8317"
+# BRIDGE_CONFIG_DIR="$HOME/.claude-bridge"
+
+# Auto-verdeling: "rail:gewicht ..." — gewichten mogen elk totaal vormen.
+# AUTO_SPLIT="grok:65 codex:35"
+
+# Modellen en efforts per rail.
+# GROK_MODEL="grok"            GROK_EFFORT="xhigh"
+# CODEX_CHAIN="gpt-5.6-terra gpt-5.6-luna"
+# CODEX_EFFORT="high"          CODEX_SMALL_FAST="gpt-5.4-mini"
+# OPENROUTER_MODEL="deepseek"
+# CURSOR_MODEL="grok"          WSL_DISTRO="Ubuntu"
+
+# State (teller, log, tempfiles) en optioneel bridge-herstart-script.
+# DELEGATE_STATE_DIR="$HOME/.delegate-state"
+# BRIDGE_ENSURE="$HOME/claude-bridges/scripts/bridge-ensure.ps1"
+
+# Native Claude-seats als extra rails: SEAT_<NAAM>=<claude-config-dir>,
+# of "-" voor je standaard seat. delegate.sh max ... / delegate.sh werk ...
+# SEAT_MAX="$HOME/.claude-max"
+# SEAT_WERK="-"
+
+# Rails die een frontend-waarschuwing krijgen (zwak UI-werk).
+# WARN_FRONTEND_RAILS="grok"
+
+# Automatische context-injectie per repo: echo bestandspaden (een per regel)
+# op basis van de workdir. Voorbeeld: injecteer invarianten in een monorepo.
+# delegate_context() {
+#   if [ -f "$1/backend/app/core/marker.py" ]; then
+#     echo "$HOME/context/mijn-invarianten.md"
+#   fi
+# }
