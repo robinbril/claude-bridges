@@ -111,26 +111,29 @@ Zonder codex CLI kan elk extra account ook direct via
 browser van dat account). Sturing van de verdeling: `routing.strategy`
 (round-robin of fill-first) en `session-affinity` in config.yaml.
 
-## Valkuilen (elk echt gebeurd)
+## Valkuilen en hun vangnet
 
-- **Grok-JWT verloopt.** Alleen de Grok CLI kan hem refreshen; de proxy meldt
-  het expliciet. Open de CLI even en de rail doet het weer.
-- **Cooldown-vergrendeling.** Een enkele quota-403 zette een provider
-  permanent in cooldown tot herstart. Daarom `disable-cooling: true` op beide
-  openai-compatibility providers.
-- **Claude-ID aliassen.** `claude -p` stuurt interne Anthropic-model-IDs
-  (small-fast, subagents). Zonder aliassen in config.yaml 502't elke
-  delegatie. De aliassen wijzen naar grok; de codex-rail zet daarom
-  `ANTHROPIC_SMALL_FAST_MODEL` expliciet, zodat hij niet van de grok-rail
-  afhangt.
-- **Mid-stream drops met exit 0.** De bridge sluit soms mid-response en de
-  harness geeft toch exit 0. `run_met_retry` in delegate.sh scant de output
-  op drop-markers en herstart tot 4x.
-- **Codex-tokenrefresh.** CLIProxyAPI refresht geimporteerde codex-tokens
-  zelf (core auth auto-refresh, 15 min interval); de import is eenmalig.
-- **gpt-5.6-sol weigert op een ChatGPT-account.** "Not supported when using
-  Codex with a ChatGPT account"; sol is API-key-only. De codex-keten valt
-  daarom terug op terra > luna.
+Draai `scripts/bridge-doctor.ps1` voor een diagnose in seconden.
+
+- **Grok-JWT verloopt.** Alleen de Grok CLI kan hem refreshen. `scripts/grok-jwt-ensure.js`
+  checkt de resterende geldigheid en triggert een headless CLI-refresh; alleen als dat
+  faalt is de handmatige CLI-login nodig.
+- **Cooldown-vergrendeling.** Een enkele quota-403 zette een provider permanent in
+  cooldown tot herstart. Daarom `disable-cooling: true` op beide openai-compatibility
+  providers; `scripts/bridge-doctor.ps1` bewaakt dat de regel er staat.
+- **Claude-ID-aliassen.** `claude -p` stuurt interne Anthropic-model-IDs (small-fast,
+  subagents). Zonder aliassen in config.yaml 502't elke delegatie. De aliassen wijzen
+  naar grok; de codex-rail zet daarom `ANTHROPIC_SMALL_FAST_MODEL` expliciet, zodat hij
+  niet van de grok-rail afhangt. bridge-doctor checkt hun aanwezigheid.
+- **Mid-stream drops met exit 0.** De bridge sluit soms mid-response en de harness
+  geeft toch exit 0. `run_met_retry` in delegate.sh scant de output op drop-markers
+  en herstart tot 4x; `tests/test-drop-markers.sh` pint de marker-regex.
+- **Codex-tokenrefresh.** CLIProxyAPI refresht geimporteerde codex-tokens zelf
+  (core auth auto-refresh, 15 min interval); de import is eenmalig. bridge-doctor
+  toont de leeftijd van het auth-bestand.
+- **gpt-5.6-sol weigert op een ChatGPT-account.** "Not supported when using Codex
+  with a ChatGPT account"; sol is API-key-only. De codex-keten valt daarom terug
+  op terra > luna; quota-cooldowns (429) zakken automatisch een trede.
 
 ## Sensitiviteit
 
