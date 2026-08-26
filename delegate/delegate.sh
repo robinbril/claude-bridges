@@ -188,6 +188,19 @@ for _wr in ${WARN_FRONTEND_RAILS:-grok}; do
   fi
 done
 
+# Optionele harde grendel: gevoelige data mag nooit stil naar een extern model.
+# Zet SENSITIVE_RE in de conf (bv. "BSN|password|api[_-]?key|secret|klantgegeven")
+# en EXTERNAL_RAILS (default "grok openrouter"). Matcht de prompt op zo'n rail,
+# dan stopt de delegatie en wijst naar een Claude-seat. Leeg (default) = uit.
+if [ -n "${SENSITIVE_RE:-}" ] && grep -qiE "$SENSITIVE_RE" "$promptfile"; then
+  for _er in ${EXTERNAL_RAILS:-grok openrouter}; do
+    if [ "$rail" = "$_er" ]; then
+      echo "[delegate] GEBLOKKEERD: prompt matcht SENSITIVE_RE en rail '$rail' is een extern model. Draai dit op een Claude-seat (native seat of de hoofdsessie), nooit stil naar buiten." >&2
+      exit 3
+    fi
+  done
+fi
+
 case "$rail" in
   grok)
     # Snelle start: updater/telemetry uit, geen MCP-discovery (DELEGATE_MCP=1

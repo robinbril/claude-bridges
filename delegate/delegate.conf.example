@@ -33,6 +33,12 @@
 # Rails die een frontend-waarschuwing krijgen (zwak UI-werk).
 # WARN_FRONTEND_RAILS="grok"
 
+# Harde grendel voor gevoelige data: matcht de prompt op SENSITIVE_RE en draait
+# de rail op een extern model (EXTERNAL_RAILS), dan stopt de delegatie (exit 3)
+# en moet je op een Claude-seat draaien. Leeg = uit (default).
+# SENSITIVE_RE="BSN|password|api[_-]?key|secret|klantgegeven|persoonsgegeven"
+# EXTERNAL_RAILS="grok openrouter"
+
 # Automatische context-injectie per repo: echo bestandspaden (een per regel)
 # op basis van de workdir. Voorbeeld: injecteer invarianten in een monorepo.
 # delegate_context() {
