@@ -5,3 +5,6 @@ logs/
 auths/
 *.bak*
 __pycache__/
+.harness/
+delegate/state/
+grok-auth-proxy/grok-usage.json
