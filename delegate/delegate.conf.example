@@ -1,48 +1,41 @@
-# ~/.delegate.conf — machine-specifieke instellingen voor delegate.sh.
-# Wordt gesourced als bash; staat BUITEN git. Kopieer dit bestand naar
-# ~/.delegate.conf en pas aan. Alles is optioneel: zonder conf draait
-# delegate.sh op de defaults hieronder.
-
-# Verplicht voor de bridge-rails: de router-key uit cliproxy/config.yaml.
-# MODEL_ROUTER_KEY="jouw-router-key"
-
-# Bridge-endpoint en optioneel een aparte claude-config-dir voor delegaties
-# (houdt settings/history van je hoofd-seat schoon).
+# Local Bash configuration, outside git. delegate.sh exports these settings.
+# Choose one model per rail from the installed provider's model catalog.
+# MODEL_ROUTER_KEY="your-local-bridge-key"
 # BRIDGE_URL="http://127.0.0.1:8317"
 # BRIDGE_CONFIG_DIR="$HOME/.claude-bridge"
-
-# Auto-verdeling: "rail:gewicht ..." — gewichten mogen elk totaal vormen.
-# AUTO_SPLIT="grok:65 codex:35"
-
-# Modellen en efforts per rail.
-# GROK_MODEL="grok"            GROK_EFFORT="xhigh"
-# CODEX_CHAIN="gpt-5.6-terra gpt-5.6-luna"
-# CODEX_EFFORT="high"          CODEX_SMALL_FAST="gpt-5.4-mini"
+# GROK_MODEL="grok"
+# CODEX_MODEL="choose-from-your-catalog"
 # OPENROUTER_MODEL="deepseek"
-# CURSOR_MODEL="grok"          WSL_DISTRO="Ubuntu"
+# CURSOR_MODEL="choose-from-your-catalog"
+# GROK_EFFORT="high"
+# CODEX_EFFORT="high"
 
-# State (teller, log, tempfiles) en optioneel bridge-herstart-script.
-# DELEGATE_STATE_DIR="$HOME/.delegate-state"
-# BRIDGE_ENSURE="$HOME/claude-bridges/scripts/bridge-ensure.ps1"
-
-# Native Claude-seats als extra rails: SEAT_<NAAM>=<claude-config-dir>,
-# of "-" voor je standaard seat. delegate.sh max ... / delegate.sh werk ...
-# SEAT_MAX="$HOME/.claude-max"
+# Native Claude subscription seats. Supply the model as the fourth argument.
 # SEAT_WERK="-"
+# SEAT_MAX="$HOME/.claude-max"
 
-# Rails die een frontend-waarschuwing krijgen (zwak UI-werk).
-# WARN_FRONTEND_RAILS="grok"
+# Total task limits, shared by explicit resume attempts.
+# DELEGATE_MAX_ATTEMPTS=3
+# DELEGATE_MAX_SECONDS=900
+# DELEGATE_MAX_INPUT_BYTES=65536
+# DELEGATE_MAX_OUTPUT_BYTES=16777216
+# Optional: prevent another attempt when reported tokens reach this threshold.
+# Not an in-flight token cap. Unknown prior usage also blocks a new attempt.
+# DELEGATE_MAX_REPORTED_TOKENS=200000
+# DELEGATE_STATE_DIR="$HOME/.delegate-state"
+# DELEGATE_PYTHON="python"
 
-# Harde grendel voor gevoelige data: matcht de prompt op SENSITIVE_RE en draait
-# de rail op een extern model (EXTERNAL_RAILS), dan stopt de delegatie (exit 3)
-# en moet je op een Claude-seat draaien. Leeg = uit (default).
-# SENSITIVE_RE="BSN|password|api[_-]?key|secret|klantgegeven|persoonsgegeven"
-# EXTERNAL_RAILS="grok openrouter"
+# Per invocation: DELEGATE_TASK_ID=my-task; DELEGATE_RESUME=1 to resume.
+# Reuse the original prompt, context, model, tools, directory and limits.
+# DELEGATE_CWD="/path/to/repo"
+# DELEGATE_MCP=0
+# DELEGATE_SENSITIVE=1
+# SENSITIVE_RE='BSN|password|api[_-]?key|secret|klantgegeven|persoonsgegeven'
 
-# Automatische context-injectie per repo: echo bestandspaden (een per regel)
-# op basis van de workdir. Voorbeeld: injecteer invarianten in een monorepo.
+# Additional context: one path per line, not colon-separated.
+# DELEGATE_CONTEXT=$'C:/context/rules.txt\nC:/context/acceptance.txt'
 # delegate_context() {
 #   if [ -f "$1/backend/app/core/marker.py" ]; then
-#     echo "$HOME/context/mijn-invarianten.md"
+#     printf '%s\n' "$HOME/context/my-invariants.md"
 #   fi
 # }

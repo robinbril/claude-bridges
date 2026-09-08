@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="nl">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Claude Bridges: uitvoering en herstel</title>
+<style>
+body{max-width:850px;margin:40px auto;padding:0 22px;font:17px/1.65 system-ui,sans-serif;color:#202020;background:#fafafa}
+h1,h2{line-height:1.2}h2{margin-top:2em}code,pre{font-family:ui-monospace,monospace;font-size:.9em}pre{background:#eee;padding:16px;overflow:auto}table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:10px;border-bottom:1px solid #ccc}a{color:#164ca1}
+</style>
+<h1>Claude Bridges</h1>
+<p>De bridge laat Claude Code met een expliciet gekozen model werken. De uitvoering bewaart een taakdossier, begrenst pogingen en looptijd, en controleert of de CLI een volledig resultaat teruggeeft. Cursor gebruikt zijn eigen CLI.</p>
+<h2>Wat verandert</h2>
+<ul>
+<li>Geen automatische verdeling of fallback. Kies een rail en één model; ontbrekende modellen stoppen vóór de agent start.</li>
+<li>Een mislukte poging wordt nooit automatisch herhaald. Hervatten gebeurt alleen op verzoek, in dezelfde sessie.</li>
+<li>Dubbele context telt één keer mee. Ontbrekende of te grote context geeft een fout, geen stille afkapping.</li>
+<li>Exitcode 0 is onvoldoende: het gestructureerde eindresultaat moet compleet zijn. Een afgekapt antwoord, geweigerde tool of ontbrekend resultaat telt als onvolledig.</li>
+<li>De Grok-proxy gebruikt standaard maximaal twee gelijktijdige verzoeken; geannuleerde wachtrijverzoeken worden verwijderd vóór upstreamuitvoering.</li>
+</ul>
+<h2>Installeren</h2>
+<p>Vereist: Python 3.10+, Git Bash voor de shell-wrapper, de relevante CLI en voor Grok Node.js. De Python- en Node-code gebruikt alleen standaardbibliotheken. Voer CLI-aanmeldingen uit op het gewenste abonnement.</p>
+<ol>
+<li>Installeer CLIProxyAPI apart en gebruik <code>cliproxy/config.example.yaml</code> als uitgangspunt. Controleer actuele modelnamen bij je provider. De voorbeelden garanderen geen beschikbaarheid.</li>
+<li>Voor Grok: meld aan met de Grok CLI en start <code>grok-auth-proxy/grok-auth-proxy.js</code>. Deze leest je lokale Grok-login. Voor Codex kan <code>scripts/codex_auth_import.py</code> de bestaande CLI-login importeren, of gebruik de device-login van CLIProxyAPI.</li>
+<li>Kopieer <code>delegate/delegate.conf.example</code> naar <code>~/.delegate.conf</code>. Vul de lokale router-key, de gewenste modellen en zo nodig een native seat in. <code>MODEL_ROUTER_KEY</code> is de lokale bridge-key; OpenRouter gebruikt daarnaast zijn eigen API-key in de proxyconfig.</li>
+<li>Gebruik voor deze versie <code>delegate/delegate.sh</code> uit deze checkout. Een andere kopie in een orchestratiemap wordt hierdoor niet bijgewerkt.</li>
+</ol>
+<p>De runner start of herstart geen services. Bestaande services en live configuratie veranderen niet door de broncode bij te werken. Controleer vóór een latere activatie welke checkout en configuratie de service gebruikt.</p>
+<h2>Een taak starten</h2>
+<p>PowerShell, vanuit deze checkout. Vervang het voorbeeldmodel door een model uit je bridgecatalogus. <code>Read Grep Glob</code> geeft alleen die tools vooraf toestemming; niet-toegestane Claude-tools vragen in deze uitvoering geen interactieve toestemming.</p>
+<pre>$env:DELEGATE_TASK_ID = 'review-parser'
+$env:DELEGATE_CWD = 'C:/werk/mijn-repo'
+&amp; 'C:/Program Files/Git/bin/bash.exe' ./delegate/delegate.sh codex 'Read Grep Glob' C:/werk/opdracht.txt 'model-uit-catalogus'</pre>
+<p>Voor een native Claude-seat definieer je bijvoorbeeld <code>SEAT_WERK="-"</code> in de configuratie en gebruik je <code>werk</code> als rail. Voor Cursor gebruik je <code>cursor</code>, lege tools en een expliciet Cursor-model. Cursor heeft eigen toolrechten; een ontbrekende native CLI leidt niet meer tot een automatische WSL-uitwijk. Binnen WSL kun je dezelfde runner met daar geïnstalleerde CLI's gebruiken.</p>
+<p>Een bridge-aanroep gebruikt standaard <code>~/.claude-bridge</code> als aparte Claude-configuratiemap. Stel <code>BRIDGE_CONFIG_DIR</code> in wanneer jouw bestaande bridge een andere map gebruikt. Native seats behouden hun opgegeven configuratiemap; overgeërfde Anthropic API-routing wordt verwijderd.</p>
+<h2>Hervatten</h2>
+<p>Inspecteer eerst <code>task.json</code>, de output van de laatste poging en de werkbestanden. Zet vervolgens <code>DELEGATE_RESUME=1</code> en herhaal dezelfde opdracht met dezelfde taak-ID. Er gaat een korte hervatinstructie naar de bestaande sessie; de oorspronkelijke context wordt niet opnieuw als nieuwe taak ingestuurd.</p>
+<pre>$env:DELEGATE_RESUME = '1'
+&amp; 'C:/Program Files/Git/bin/bash.exe' ./delegate/delegate.sh codex 'Read Grep Glob' C:/werk/opdracht.txt 'model-uit-catalogus'</pre>
+<p>Model, tools, context, configuratiemap, werkmap en limieten moeten gelijk blijven. Een veranderde Git-branch of commit blokkeert hervatten. Een voltooid taak-ID wordt niet opnieuw uitgevoerd. Een procescrash die de status op <code>running</code> laat staan vereist handmatige inspectie van eventuele nog actieve processen; de runner neemt een onbekende lopende taak niet automatisch over. Na inspectie kan de operator een nieuwe afgebakende opdracht maken voor het resterende werk.</p>
+<h2>Limieten en verbruik</h2>
+<table>
+<tr><th>Instelling</th><th>Default</th><th>Werking</th></tr>
+<tr><td>DELEGATE_MAX_ATTEMPTS</td><td>3</td><td>Totaal aantal expliciet gestarte pogingen per taak.</td></tr>
+<tr><td>DELEGATE_MAX_SECONDS</td><td>900</td><td>Totale CLI-looptijd; resterende tijd gaat mee naar hervatten.</td></tr>
+<tr><td>DELEGATE_MAX_INPUT_BYTES</td><td>65536</td><td>Opdracht plus expliciet toegevoegde context, na deduplicatie.</td></tr>
+<tr><td>DELEGATE_MAX_OUTPUT_BYTES</td><td>16777216</td><td>Output en stderr per poging; gecontroleerd tijdens uitvoering.</td></tr>
+<tr><td>DELEGATE_MAX_REPORTED_TOKENS</td><td>Niet ingesteld</td><td>Blokkeert een volgende poging bij bereikt budget of onbekend eerder verbruik.</td></tr>
+</table>
+<p>Dit is geen harde tokenstop tijdens een modelverzoek. De CLI kan vóór het eindresultaat al meer tokens hebben gebruikt. De invoerlimiet omvat niet de verborgen systeemprompt, repo-instructies, MCP-definities, toolresultaten of een bestaande sessie. De uitvoerlimiet wordt periodiek gecontroleerd en kan kort overschreden worden. CLI-interne API-retries vallen binnen de looptijd, maar worden niet als aparte runnerpogingen geteld.</p>
+<p>Het taakdossier telt de door de CLI gerapporteerde input-, output- en cachetokens uit <code>modelUsage</code>, inclusief daarin opgenomen subagents. Hoofdagent-verbruik uit <code>usage</code> wordt alleen als gedeeltelijke telling bewaard. Ontbrekende velden en nulgezette crashtellingen blijven onbekend; <code>total_tokens</code> blijft dan leeg. Een abonnement betekent niet dat deze telling een factuurbedrag is. <code>verification: not_run</code> blijft staan: een voltooid modelantwoord bewijst geen correct uitgevoerde opdracht.</p>
+<h2>Context en lokale gegevens</h2>
+<p><code>DELEGATE_CONTEXT</code> bevat één bestandspad per regel, ook op Windows. De bestaande <code>delegate_context</code>-functie mag aanvullende paden teruggeven. De opdracht blijft vooraan staan; context wordt als bronmateriaal toegevoegd en krijgt geen instructie om de opdracht te overrulen.</p>
+<p>Het taakdossier staat standaard onder <code>delegate/state/&lt;taak-ID&gt;</code>. Elke poging bewaart de ingestuurde tekst, volledige CLI-output en stderr lokaal. Deze kunnen gevoelige inhoud bevatten. De manifestgegevens bevatten onder meer inhoudshashes, bronpaden, sessie-ID, Git-status en verbruik. Ze zijn geen vervanging voor een Git-backup of transactielog. Houd een aangepaste <code>DELEGATE_STATE_DIR</code> buiten gedeelde of gesynchroniseerde mappen.</p>
+<p><code>DELEGATE_SENSITIVE=1</code> blokkeert Grok, Codex-via-proxy, OpenRouter en Cursor. Een optionele <code>SENSITIVE_RE</code> controleert de volledige expliciete invoer inclusief context. Deze controle inspecteert geen toekomstige toolreads en is geen datalekbeveiliging op OS-niveau. Gebruik voor gevoelig werk de toegestane native seat.</p>
+<h2>Grok-proxy</h2>
+<p>Defaults: <code>GROK_MAX_CONCURRENCY=2</code>, <code>GROK_MAX_QUEUE=200</code>, <code>GROK_QUEUE_WAIT_MS=180000</code>, <code>GROK_SOCKET_TIMEOUT_MS=300000</code>, <code>GROK_MAX_BODY_BYTES=4194304</code>. Ongeldige numerieke configuratie stopt de startup. Grote bodies krijgen 413; ongeldige JSON krijgt 400 vóór er upstreamwerk start. Wachtrijafwijzingen geven 503 met <code>Retry-After: 5</code>. Een afgebroken stream sluit de downstreamverbinding en geeft het slot vrij.</p>
+<h2>Controleren</h2>
+<pre>python -m unittest discover -s tests -p 'test_*.py' -v
+node --test tests/test-proxy.cjs</pre>
+<p>De tests gebruiken tijdelijke bestanden, een fixture-CLI en lokale HTTP-servers. Ze controleren uitvoering, sessieherstel, privacygrenzen, budgets en de proxyverbindingen zonder providerkosten. Ze bewijzen geen live providercompatibiliteit, hogere antwoordkwaliteit of een gemeten percentage tokenbesparing.</p>
+<p>Protocolreferenties: <a href="https://code.claude.com/docs/en/agent-sdk/typescript">Claude-resultaatberichten</a>, <a href="https://code.claude.com/docs/en/agent-sdk/cost-tracking">verbruik en subagents</a> en <a href="https://docs.cursor.com/en/cli/reference/output-format">Cursor-uitvoerformaat</a>.</p>
+</html>

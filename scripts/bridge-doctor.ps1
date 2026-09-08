@@ -104,30 +104,19 @@ function Check-Cooldown {
   }
 }
 
-function Check-Aliases {
+function Check-ModelRouting {
   try {
     $cfg = Join-Path $env:USERPROFILE 'cliproxy\config.yaml'
     if (-not (Test-Path -LiteralPath $cfg)) {
-      Write-Check 'Claude-ID-aliassen' $false 'cliproxy\config.yaml ontbreekt'
+      Write-Check 'Model-routing' $false 'cliproxy\config.yaml ontbreekt'
       return
     }
-    $lines = @(Select-String -LiteralPath $cfg -Pattern 'alias:') | ForEach-Object { $_.Line }
-    $joined = $lines -join "`n"
-    $hasOpus = $joined -match 'claude-opus-'
-    $hasHaiku = $joined -match 'claude-haiku-'
-    if ($hasOpus -and $hasHaiku) {
-      Write-Check 'Claude-ID-aliassen' $true 'claude-opus- en claude-haiku- aanwezig'
-    } else {
-      $miss = @()
-      if (-not $hasOpus) { $miss += 'claude-opus-' }
-      if (-not $hasHaiku) { $miss += 'claude-haiku-' }
-      Write-Check 'Claude-ID-aliassen' $false ("ontbreekt: {0}" -f ($miss -join ', '))
-    }
+    $broadAliases = @(Select-String -LiteralPath $cfg -Pattern 'alias:\s*["'']?claude-(opus|haiku|sonnet|fable)-')
+    Write-Check 'Model-routing' ($broadAliases.Count -eq 0) 'Algemene Claude-ID-aliassen horen niet in de expliciete task-runnerconfig; controleer andere consumers voor aanpassen.'
   } catch {
-    Write-Check 'Claude-ID-aliassen' $false $_.Exception.Message
+    Write-Check 'Model-routing' $false $_.Exception.Message
   }
 }
-
 function Check-CodexAuth {
   try {
     $dir = Join-Path $env:USERPROFILE '.cli-proxy-api'
@@ -156,7 +145,7 @@ function Check-Ping {
       return
     }
     $ProgressPreference = 'SilentlyContinue'
-    $resp = Invoke-WebRequest -Uri 'http://127.0.0.1:8317/v1/models' -Method Post `
+    $resp = Invoke-WebRequest -Uri 'http://127.0.0.1:8317/v1/models' -Method Get `
       -Headers @{ Authorization = "Bearer $key" } `
       -UseBasicParsing -TimeoutSec 8
     $code = [int]$resp.StatusCode
@@ -180,7 +169,7 @@ function Check-Ping {
 Check-Bridge
 Check-GrokJwt
 Check-Cooldown
-Check-Aliases
+Check-ModelRouting
 Check-CodexAuth
 if ($Ping) { Check-Ping }
 

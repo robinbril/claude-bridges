@@ -31,20 +31,8 @@ openai-compatibility:
       - name: "grok-composer-2.5-fast"
         alias: "grok-fast"
         display-name: "Grok Composer 2.5 Fast"
-      # claude -p resolvet een onbekende --model naar zijn default claude-IDs;
-      # vang die op zodat de roundtable-calls (main + small-fast) bij Grok landen.
-      - name: "grok-4.6"
-        alias: "claude-opus-4-8"
-      - name: "grok-4.6"
-        alias: "claude-haiku-4-5-20251001"
-      - name: "grok-4.6"
-        alias: "claude-sonnet-5"
-      # Claude 5-generatie defaults (CLI-update 2026-08): zonder deze aliassen
-      # 502't elke delegatie zodra de harness zijn interne default-ID stuurt.
-      - name: "grok-4.6"
-        alias: "claude-opus-5"
-      - name: "grok-4.6"
-        alias: "claude-fable-5"
+      # Geen algemene Claude-ID-aliassen: onbekende modellen moeten falen.
+      # De runner zet interne model-defaults expliciet op het gekozen model.
 
   - name: "openrouter"
     base-url: "https://openrouter.ai/api/v1"
