@@ -1,11 +1,13 @@
 # claude-bridges
 
-Run Claude Code with an explicitly selected model through CLIProxyAPI, or use a native subscription seat. Cursor uses its own CLI.
+Gebruik andere AI-modellen in Claude Code, met dezelfde bestanden en werkinstructies. Je kiest zelf welk model een opdracht uitvoert.
 
-The runner records each task locally, validates structured completion, and resumes only when explicitly requested. It never switches models or replays a failed task automatically. Context is deduplicated and bounded; reported token usage stays separate from unknown usage and from verification of the work.
+Als een opdracht vastloopt, wil je niet dat alles opnieuw begint of zonder overleg bij een ander model belandt. Deze koppeling bewaart de voortgang. Jij bepaalt wanneer je verdergaat.
 
-[Installation, configuration, limits and recovery](docs/bridge-guide.html)
+Je kunt grenzen stellen aan de looptijd en de hoeveelheid informatie die je meestuurt. Dubbele informatie wordt maar één keer meegestuurd. Als het model zijn verbruik doorgeeft, houdt de koppeling dat bij.
 
-Python 3.10+, Git Bash (for delegate.sh), and the relevant authenticated CLI are required. Bridge routes require an existing CLIProxyAPI installation and a configured model listed by its model catalog. The Grok proxy uses Node.js built-ins.
+Claude Code blijft je werkomgeving. Voor Cursor gebruik je de eigen omgeving van Cursor.
 
-Local checks: Python unittest discovery under tests and Node's test runner on tests/test-proxy.cjs. Tests use fixture CLIs and local HTTP servers, without model calls.
+[Installatie en gebruik](docs/bridge-guide.html)
+
+De koppeling controleert of een antwoord volledig is binnengekomen. Of het werk inhoudelijk klopt, moet je nog steeds controleren.
