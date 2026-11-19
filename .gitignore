@@ -8,3 +8,17 @@ __pycache__/
 .harness/
 delegate/state/
 grok-auth-proxy/grok-usage.json
+
+# Process artifacts stay local (specs, loop state, handoffs, plans, caches, scratch)
+.loops/
+.supergoal/
+.run/
+.e2e/
+vite-cache/
+scratchpad/
+.tmp*/
+**/docs/overdracht/
+**/docs/tasks/
+**/docs/specs/
+**/docs/superplan/
+**/docs/plan-*.md
