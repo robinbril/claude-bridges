@@ -10,10 +10,13 @@ delegate/state/
 grok-auth-proxy/grok-usage.json
 
 # Process artifacts stay local (specs, loop state, handoffs, plans, caches, scratch)
+**/.harness/*
+!**/.harness/projectstructuur/
 .loops/
 .supergoal/
 .run/
-.e2e/
+**/.e2e/*
+!**/.e2e/cache/
 vite-cache/
 scratchpad/
 .tmp*/
